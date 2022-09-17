@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -10,6 +11,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  String? mtoken = '';
   TextEditingController username = TextEditingController();
   TextEditingController title = TextEditingController();
   TextEditingController body = TextEditingController();
@@ -18,6 +20,25 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     requestPermission();
+    getToken();
+  }
+
+  void getToken() async {
+    await FirebaseMessaging.instance.getToken().then((token) => {
+          setState(
+            () {
+              mtoken = token;
+              print('My token is  $mtoken');
+            },
+          ),
+          saveToken(token!),
+        });
+  }
+
+  void saveToken(String token) async {
+    await FirebaseFirestore.instance.collection('UserTokens').doc('User1').set({
+      'token': token,
+    });
   }
 
   void requestPermission() async {
