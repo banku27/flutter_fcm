@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:google_docs_clone/firebase_options.dart';
 import 'package:google_docs_clone/screens/main_screen.dart';
 
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  print('handling a background message ${message.messageId}');
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
