@@ -12,6 +12,8 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   String? mtoken = '';
+  late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
   TextEditingController username = TextEditingController();
   TextEditingController title = TextEditingController();
   TextEditingController body = TextEditingController();
@@ -21,6 +23,60 @@ class _MainScreenState extends State<MainScreen> {
     super.initState();
     requestPermission();
     getToken();
+    initInfo();
+  }
+
+  initInfo() {
+    var androidInitialize =
+        const AndroidInitializationSettings('@mipmap/ic_launcher');
+    var iOSInitialise = const IOSInitializationSettings();
+    var initializationSettings =
+        InitializationSettings(android: androidInitialize, iOS: iOSInitialise);
+
+    flutterLocalNotificationsPlugin.initialize(initializationSettings,
+        onSelectNotification: (String? payLoad) async {
+      try {
+        if (payLoad != null && payLoad.isNotEmpty) {
+        } else {}
+      } catch (e) {}
+      return;
+    });
+
+    FirebaseMessaging.onMessage.listen(
+      (RemoteMessage message) async {
+        print('...........onMessage.........');
+        print(
+            'onMessage:${message.notification?.title}/${message.notification?.body}}');
+
+        BigTextStyleInformation bigTextStyleInformation =
+            BigTextStyleInformation(
+          message.notification!.body.toString(),
+          htmlFormatBigText: true,
+          contentTitle: message.notification!.title.toString(),
+          htmlFormatContentTitle: true,
+        );
+        AndroidNotificationDetails androidplatformChannelSpecifics =
+            AndroidNotificationDetails(
+          'dbfood',
+          'dbfood',
+          importance: Importance.high,
+          styleInformation: bigTextStyleInformation,
+          priority: Priority.high,
+          playSound: true,
+        );
+
+        NotificationDetails platformChannelSpecifics = NotificationDetails(
+          android: androidplatformChannelSpecifics,
+          iOS: const IOSNotificationDetails(),
+        );
+        await flutterLocalNotificationsPlugin.show(
+            0,
+            message.notification?.title,
+            message.notification?.body,
+            platformChannelSpecifics,
+            payload: message.data['body']);
+      },
+    );
   }
 
   void getToken() async {
