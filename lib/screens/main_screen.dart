@@ -1,7 +1,11 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:http/http.dart' as http;
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -118,6 +122,40 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
+  void sendPushMessage(String token, String body, String title) async {
+    try {
+      await http.post(
+        Uri.parse('http://fcm.googleapis.com/fcm/send'),
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+          'Authorization':
+              'key=	AAAAPh2IXxE:APA91bGE14KIs0NvYvF3rm8qoFY8TWjK99TmCzjxOMfc7qXrsfbuzzLCoSkPjlhewG1GpLDoiQjFim864rdMhx1qq21OHfeziaMnHGcz76xnFa0xKoKZ2TfWR8QVEdUL35iAlmLQKaTN'
+        },
+        body: jsonEncode(
+          <String, dynamic>{
+            'priority': 'high',
+            'data': <String, dynamic>{
+              'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+              'status': 'done',
+              'body': body,
+              'title': title,
+            },
+            "notification": <String, dynamic>{
+              'title': title,
+              'body': body,
+              'android_channel_id': 'dbfood',
+            },
+            'to': token,
+          },
+        ),
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print('error push notification');
+      }
+    }
+  }
+
   @override
   void dispose() {
     username.dispose();
@@ -146,6 +184,18 @@ class _MainScreenState extends State<MainScreen> {
                 String name = username.text.trim();
                 String titleText = title.text;
                 String bodyText = body.text;
+
+                if (name != '') {
+                  DocumentSnapshot snap = await FirebaseFirestore.instance
+                      .collection('UserToken')
+                      .doc(name)
+                      .get();
+                  String token = snap['token'];
+
+                  print(token);
+
+                  sendPushMessage(token, titleText, bodyText);
+                }
               },
               child: Container(
                 margin: const EdgeInsets.all(20),
@@ -171,3 +221,18 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 }
+
+
+//  <intent-filter>
+//             <action android:name="android.intent.action.MAIN" />
+
+//             <category android:name="android.intent.category.LAUNCHER" />
+//         </intent-filter>
+//         <intent-filter>
+//             <action android:name="FLUTTER_NOTIFICATION_CLICK" />
+
+//             <category android:name="android.intent.category.DEFAULT" />
+//         </intent-filter>
+//         <intent-filter>
+//             <action android:name="com.google.firebase.MESSAGING_EVENT" />
+//         </intent-filter>
